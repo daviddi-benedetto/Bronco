@@ -1,9 +1,9 @@
-// Battle Bot Control Code
+Tank control code // Battle Bot Control Code
 // Authors: David Di-Benedetto, William Marsh, Mehul Gupta, Brycen Miller
 
 // Pins
-int receiverPin2 = 2; // Forward/Backward
-int receiverPin4 = 4; // Left/Right
+int receiverPin2 = 2; // left joystick
+int receiverPin4 = 4; // right joystick
 int receiverPin6 = 10; // Channel 6 for Beater Motor control, connected to Arduino pin 10
 
 int LeftMotorDirectionPin = 12;
@@ -26,8 +26,8 @@ const int midPWM = (minPWM + maxPWM) / 2; // Middle PWM value, used for neutral 
 
 void setup() {
   // Receiver pins are inputs
-  pinMode(receiverPin2, INPUT); // Forward/Backward
-  pinMode(receiverPin4, INPUT); // Left/Right
+  pinMode(receiverPin2, INPUT); // right joystick
+  pinMode(receiverPin3, INPUT); // left joystick
   pinMode(receiverPin6, INPUT); // Setup for Channel 6
 
   // Motor pins are outputs
@@ -44,7 +44,7 @@ void setup() {
   pinMode(BeaterMotorInput2, OUTPUT);       
 
   // Put motors to a default state
-  digitalWrite(LeftMotorDirectionPin, HIGH); // Clockwise
+  digitalWrite(LeftMotorDirectionPin, LOW); // Clockwise
   digitalWrite(RightMotorDirectionPin, LOW); // Counter Clockwise
   
   digitalWrite(BeaterMotorInput1, LOW); // Enable Beater Bar Motor 
@@ -52,8 +52,8 @@ void setup() {
 }
 
 void loop() {
-  int pwmValue2 = pulseIn(receiverPin2, HIGH); // Read PWM value for forward/backward
-  int pwmValue4 = pulseIn(receiverPin4, HIGH); // Read PWM value for left/right
+  int pwmValue2 = pulseIn(receiverPin2, HIGH); // Read PWM value for left joystick
+  int pwmValue4 = pulseIn(receiverPin4, HIGH); // Read PWM value for right joystick
   int pwmValue6 = pulseIn(receiverPin6, HIGH); // Read PWM value for Beater Motor control
 
   // Beater Bar Control
@@ -72,79 +72,18 @@ void loop() {
   digitalWrite(LeftMotorBrakePin, LOW);
   digitalWrite(RightMotorBrakePin, LOW);
 
-  int forwardSpeed = 0;
-  int turnAdjustment = 0;
+   // Tank Controls
+  int leftSpeed = map(pwmValue2, minPWM, maxPWM, -255, 255); // Map left joystick to left motor speed
+  int rightSpeed = map(pwmValue4, minPWM, maxPWM, -255, 255); // Map right joystick to right motor speed
 
-  // Forward/Backward
-  if (pwmValue2 > midPWM) {
-    // Move forward
-    digitalWrite(LeftMotorDirectionPin, HIGH); 
-    digitalWrite(RightMotorDirectionPin, LOW);
-    forwardSpeed = map(pwmValue2, midPWM, maxPWM, 0, 255);
+  // Apply the speed to left and right motors
+  analogWrite(LeftMotorPWMPin, abs(leftSpeed));
+  analogWrite(RightMotorPWMPin, abs(rightSpeed));
 
-  } else if (pwmValue2 < midPWM) {
-    // Move backward
-    digitalWrite(LeftMotorDirectionPin, LOW); 
-    digitalWrite(RightMotorDirectionPin, HIGH);
-    forwardSpeed = map(pwmValue2, minPWM, midPWM, 255, 0);
-  }
-  
-  // Turning While Moving Forwards
-  if (pwmValue4 > midPWM && pwmValue2 > midPWM) {
-    // Turning right while moving forward - reduce speed of right wheel
-    turnAdjustment = map(pwmValue4, midPWM, maxPWM, forwardSpeed, 0);
-    analogWrite(LeftMotorPWMPin, forwardSpeed);
-    analogWrite(RightMotorPWMPin, forwardSpeed - turnAdjustment);
+  // Set motor directions based on the sign of the speed
+  digitalWrite(LeftMotorDirectionPin, leftSpeed >= 0 ? HIGH : LOW);
+  digitalWrite(RightMotorDirectionPin, rightSpeed >= 0 ? HIGH : LOW);
 
-  } else if (pwmValue4 < midPWM && pwmValue2 > midPWM) {
-    // Turning left while moving forward - reduce speed of left wheel
-    turnAdjustment = map(pwmValue4, minPWM, midPWM, forwardSpeed, 0);
-    analogWrite(RightMotorPWMPin, forwardSpeed);
-    analogWrite(LeftMotorPWMPin, forwardSpeed - turnAdjustment);
-
-  // Turning While Moving Backwards
-  } else if (pwmValue4 > midPWM && pwmValue2 < midPWM) {
-    // Turning right while moving backward - reduce speed of left wheel
-    turnAdjustment = map(pwmValue4, minPWM, midPWM, forwardSpeed, 0);
-    analogWrite(RightMotorPWMPin, forwardSpeed);
-    analogWrite(LeftMotorPWMPin, forwardSpeed - turnAdjustment);
-
-  } else {
-    // Straight forward or backward, or stop
-    analogWrite(LeftMotorPWMPin, forwardSpeed);
-    analogWrite(RightMotorPWMPin, forwardSpeed);
-
-    if (pwmValue2 == midPWM) {
-      // Stop
-      digitalWrite(LeftMotorBrakePin, HIGH);
-      digitalWrite(RightMotorBrakePin, HIGH);
-    }
-
-  // Turning While Moving Backwards
-  if (pwmValue4 > midPWM) {
-    // Turning right - reduce speed of right wheel
-    turnAdjustment = map(pwmValue4, midPWM, maxPWM, forwardSpeed, 0);
-    analogWrite(LeftMotorPWMPin, forwardSpeed);
-    analogWrite(RightMotorPWMPin, forwardSpeed - turnAdjustment);
-
-  } else if (pwmValue4 < midPWM) {
-    // Turning left - reduce speed of left wheel
-    turnAdjustment = map(pwmValue4, minPWM, midPWM, forwardSpeed, 0);
-    analogWrite(RightMotorPWMPin, forwardSpeed);
-    analogWrite(LeftMotorPWMPin, forwardSpeed - turnAdjustment);
-
-  } else {
-    // Straight forward or backward, or stop
-    analogWrite(LeftMotorPWMPin, forwardSpeed);
-    analogWrite(RightMotorPWMPin, forwardSpeed);
-
-    if (pwmValue2 == midPWM) {
-      // Stop
-      digitalWrite(LeftMotorBrakePin, HIGH);
-      digitalWrite(RightMotorBrakePin, HIGH);
-    }
-    
-  }
 
   // Additional delay for stability
   delay(10);
