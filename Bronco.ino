@@ -1,4 +1,4 @@
-Tank control code // Battle Bot Control Code
+//Tank control code // Battle Bot Control Code
 // Authors: David Di-Benedetto, William Marsh, Mehul Gupta, Brycen Miller
 
 // Pins
@@ -27,7 +27,7 @@ const int midPWM = (minPWM + maxPWM) / 2; // Middle PWM value, used for neutral 
 void setup() {
   // Receiver pins are inputs
   pinMode(receiverPin2, INPUT); // right joystick
-  pinMode(receiverPin3, INPUT); // left joystick
+  pinMode(receiverPin4, INPUT); // left joystick
   pinMode(receiverPin6, INPUT); // Setup for Channel 6
 
   // Motor pins are outputs
@@ -89,9 +89,3 @@ void loop() {
   delay(10);
   }
   
-  }
-
-
-
-
-
